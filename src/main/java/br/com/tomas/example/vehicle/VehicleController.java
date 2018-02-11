@@ -1,8 +1,13 @@
 package br.com.tomas.example.vehicle;
 
+import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Sort.Direction;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -28,11 +33,22 @@ public class VehicleController {
     /**
      * Returns all vehicles
      *
+     * @param filter
+     * @param sortDirection
+     * @param pageIndexØ
      * @return
      */
     @GetMapping("/vehicles")
-    public ResponseEntity<Iterable<Vehicle>> getAllVehicles() {
-        return ResponseEntity.ok(vehicleRepository.findAll());
+    public ResponseEntity<Page<Vehicle>> getAllVehicles(Optional<String> filter,
+            Optional<String> sortDirection,
+            Optional<String> sortId,
+            Optional<Integer> pageIndex,
+            Optional<Integer> pageSize) {
+        return ResponseEntity.ok(vehicleRepository.findByNameLike(filter.orElse("%"), new PageRequest(
+                pageIndex.orElse(0),
+                pageSize.orElse(Integer.MAX_VALUE),
+                Sort.by(sortDirection.map(str -> Direction.fromString(str)).orElse(Direction.DESC),
+                        sortId.orElse("ID")))));
     }
 
     /**
@@ -91,6 +107,7 @@ public class VehicleController {
             this.vehicleRepository.deleteById(id);
         } catch (Exception ex) {
             log.log(Level.SEVERE, "Error deleting vehicle ", ex);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
         return ResponseEntity.noContent().build();
     }

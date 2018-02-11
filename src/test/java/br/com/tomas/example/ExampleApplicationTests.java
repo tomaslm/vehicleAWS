@@ -29,8 +29,13 @@ public class ExampleApplicationTests {
     }
 
     @Test
-    public void shouldCreateVehicle() throws Exception {
+    public void shouldGetVehicles() throws Exception {
         mockMvc.perform(get("/vehicles")).andExpect(status().isOk());
+    }
+
+    @Test
+    public void shouldGetVehicleTypes() throws Exception {
+        mockMvc.perform(get("/vehicleTypes")).andExpect(status().isOk());
     }
 
 }

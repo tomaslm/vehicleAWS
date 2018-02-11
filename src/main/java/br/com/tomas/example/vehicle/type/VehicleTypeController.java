@@ -1,8 +1,11 @@
 package br.com.tomas.example.vehicle.type;
 
+import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -31,8 +34,16 @@ public class VehicleTypeController {
      * @return
      */
     @GetMapping("/vehicleTypes")
-    public ResponseEntity<Iterable<VehicleType>> getAllVehicleTypes() {
-        return ResponseEntity.ok(vehicleTypeRepository.findAll());
+    public ResponseEntity<Iterable<VehicleType>> getAllVehicleTypes(Optional<String> filter,
+            Optional<String> sortDirection,
+            Optional<String> sortId,
+            Optional<Integer> pageIndex,
+            Optional<Integer> pageSize) {
+        return ResponseEntity.ok(vehicleTypeRepository.findByNameLike(filter.orElse("%"), new PageRequest(
+                pageIndex.orElse(0),
+                pageSize.orElse(Integer.MAX_VALUE),
+                Sort.by(sortDirection.map(str -> Sort.Direction.fromString(str)).orElse(Sort.Direction.DESC),
+                        sortId.orElse("ID")))));
     }
 
     /**
@@ -91,6 +102,7 @@ public class VehicleTypeController {
             this.vehicleTypeRepository.deleteById(id);
         } catch (Exception ex) {
             log.log(Level.SEVERE, "Error deleting vehicle type ", ex);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
         return ResponseEntity.noContent().build();
     }
